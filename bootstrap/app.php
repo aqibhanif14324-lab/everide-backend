@@ -23,5 +23,43 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'data' => null,
+                    'errors' => ['message' => 'Unauthenticated.'],
+                    'meta' => null,
+                ], 401);
+            }
+        });
+
+        $exceptions->render(function (\Illuminate\Validation\ValidationException $e, $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'data' => null,
+                    'errors' => $e->errors(),
+                    'meta' => null,
+                ], 422);
+            }
+        });
+
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'data' => null,
+                    'errors' => ['message' => 'Resource not found.'],
+                    'meta' => null,
+                ], 404);
+            }
+        });
+
+        $exceptions->render(function (\Illuminate\Auth\Access\AuthorizationException $e, $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'data' => null,
+                    'errors' => ['message' => 'This action is unauthorized.'],
+                    'meta' => null,
+                ], 403);
+            }
+        });
     })->create();
