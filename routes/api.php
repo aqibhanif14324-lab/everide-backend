@@ -4,23 +4,25 @@ use App\Http\Controllers\Api\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-// Public routes
-Route::get('/sanctum/csrf-cookie', function () {
-    return response()->json(['message' => 'CSRF cookie set']);
+// Public routes - CSRF cookie endpoint (needs session middleware)
+Route::middleware('api.session')->group(function () {
+    Route::get('/sanctum/csrf-cookie', function () {
+        return response()->json(['message' => 'CSRF cookie set']);
+    });
 });
 
-// Auth routes
-Route::prefix('auth')->group(function () {
+// Auth routes - need session middleware for login/register/logout
+Route::middleware('api.session')->prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 });
 
-// Protected routes
+// Protected routes - require authentication via Sanctum
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
-    Route::post('/auth/logout', [AuthController::class, 'logout']);
     
     // Listings
     Route::post('/listings', [\App\Http\Controllers\Api\ListingController::class, 'store']);

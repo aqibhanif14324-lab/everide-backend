@@ -12,8 +12,19 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Ensure Sanctum's stateful middleware is first for all API routes
+        // This enables session support for stateful requests from frontend
         $middleware->api(prepend: [
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+        ]);
+
+        // Create a middleware group for API routes that need explicit session (auth routes)
+        // This group includes session middleware for login/register/logout routes
+        // EnsureFrontendRequestsAreStateful is already applied to all API routes above
+        // We add session middleware here so routes can use $request->session()
+        $middleware->group('api.session', [
+            \Illuminate\Cookie\Middleware\EncryptCookies::class,
+            \Illuminate\Session\Middleware\StartSession::class,
         ]);
 
         $middleware->alias([

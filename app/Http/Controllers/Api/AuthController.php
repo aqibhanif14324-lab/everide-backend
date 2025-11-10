@@ -32,7 +32,7 @@ class AuthController extends Controller
         }
 
         $userRole = Role::where('slug', 'user')->first();
-        
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -54,6 +54,7 @@ class AuthController extends Controller
 
     public function login(Request $request): JsonResponse
     {
+
         $validator = Validator::make($request->all(), [
             'email' => ['required', 'email'],
             'password' => ['required'],
