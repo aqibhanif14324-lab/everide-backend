@@ -34,14 +34,17 @@ class VariantSeeder extends Seeder
             $variantCount = 0;
             foreach ($colors->take(2) as $color) {
                 foreach ($sizes->take(2) as $size) {
-                    $variant = ListingVariant::create([
-                        'listing_id' => $listing->id,
-                        'sku' => strtoupper(substr($listing->slug, 0, 5)) . '-' . strtoupper($color->value) . '-' . strtoupper($size->value),
-                        'price' => $listing->default_price + ($variantCount * 10),
-                        'stock_qty' => rand(5, 50),
-                        'is_default' => $variantCount === 0,
-                        'status' => 'active',
-                    ]);
+                    $sku = strtoupper(substr($listing->slug, 0, 5)) . '-' . strtoupper($color->value) . '-' . strtoupper($size->value);
+                    $variant = ListingVariant::firstOrCreate(
+                        ['sku' => $sku],
+                        [
+                            'listing_id' => $listing->id,
+                            'price' => $listing->default_price + ($variantCount * 10),
+                            'stock_qty' => rand(5, 50),
+                            'is_default' => $variantCount === 0,
+                            'status' => 'active',
+                        ]
+                    );
 
                     $variant->optionValues()->sync([$color->id, $size->id]);
                     $variantCount++;
@@ -51,14 +54,17 @@ class VariantSeeder extends Seeder
 
         // For remaining listings, create simple variants without options
         foreach ($listings->skip(10) as $listing) {
-            ListingVariant::create([
-                'listing_id' => $listing->id,
-                'sku' => strtoupper(substr($listing->slug, 0, 8)) . '-DEFAULT',
-                'price' => $listing->default_price,
-                'stock_qty' => rand(5, 50),
-                'is_default' => true,
-                'status' => 'active',
-            ]);
+            $sku = strtoupper(substr($listing->slug, 0, 8)) . '-DEFAULT';
+            ListingVariant::firstOrCreate(
+                ['sku' => $sku],
+                [
+                    'listing_id' => $listing->id,
+                    'price' => $listing->default_price,
+                    'stock_qty' => rand(5, 50),
+                    'is_default' => true,
+                    'status' => 'active',
+                ]
+            );
         }
     }
 }

@@ -46,6 +46,11 @@ class OptionValue extends Model
 
     public function variants(): BelongsToMany
     {
-        return $this->belongsToMany(ListingVariant::class, 'variant_option_values');
+        return $this->belongsToMany(
+            ListingVariant::class,
+            'variant_option_values',
+            'option_value_id',   // Foreign key in pivot table (references OptionValue)
+            'variant_id'         // Related key in pivot table (references ListingVariant)
+        );
     }
 }
