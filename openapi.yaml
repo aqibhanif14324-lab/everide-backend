@@ -1,0 +1,42 @@
+openapi: 3.0.3
+info: { title: Everide API, version: 1.0.0 }
+servers:
+  - url: http://127.0.0.1:8000
+paths:
+  /api/login:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  user:
+                    type: object
+                    properties:
+                      id: { type: integer }
+                      email: { type: string }
+  /api/user:
+    get:
+      security: [{ bearer: [] }]
+      responses:
+        '200': { description: current user }
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
