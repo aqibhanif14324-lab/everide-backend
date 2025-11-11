@@ -23,7 +23,7 @@ Route::middleware('api.session')->prefix('auth')->group(function () {
 // Protected routes - require authentication via Sanctum
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
-    
+
     // Listings
     Route::post('/listings', [\App\Http\Controllers\Api\ListingController::class, 'store']);
     Route::put('/listings/{id}', [\App\Http\Controllers\Api\ListingController::class, 'update']);
@@ -34,30 +34,30 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/listings/{id}/option-values', [\App\Http\Controllers\Api\ListingController::class, 'attachOptionValues']);
     Route::post('/listings/{id}/variants', [\App\Http\Controllers\Api\ListingController::class, 'createVariant']);
     Route::get('/listings/{id}/variants', [\App\Http\Controllers\Api\ListingController::class, 'getVariants']);
-    
+
     // Variants
     Route::put('/variants/{id}', [\App\Http\Controllers\Api\VariantController::class, 'update']);
     Route::post('/variants/{id}/images', [\App\Http\Controllers\Api\VariantController::class, 'addImage']);
     Route::delete('/variants/{id}/images/{imageId}', [\App\Http\Controllers\Api\VariantController::class, 'deleteImage']);
-    
+
     // Shops
     Route::apiResource('shops', \App\Http\Controllers\Api\ShopController::class);
     Route::get('/shops/{slug}/listings', [\App\Http\Controllers\Api\ShopController::class, 'listings']);
     Route::get('/shops/{id}/settings', [\App\Http\Controllers\Api\ShopController::class, 'getSettings']);
     Route::put('/shops/{id}/settings', [\App\Http\Controllers\Api\ShopController::class, 'updateSettings']);
-    
+
     // Orders
     Route::apiResource('orders', \App\Http\Controllers\Api\OrderController::class);
     Route::post('/orders/{id}/status', [\App\Http\Controllers\Api\OrderController::class, 'updateStatus']);
-    
+
     // Payments
     Route::post('/payments/{orderId}/intent', [\App\Http\Controllers\Api\PaymentController::class, 'createIntent']);
-    
+
     // Shipping
     Route::get('/shipping/pickups', [\App\Http\Controllers\Api\ShippingController::class, 'getPickups']);
     Route::post('/shipping/{orderId}/label', [\App\Http\Controllers\Api\ShippingController::class, 'createLabel']);
     Route::get('/shipping/{orderId}/tracking', [\App\Http\Controllers\Api\ShippingController::class, 'getTracking']);
-    
+
     // Notifications
     Route::get('/notifications', [\App\Http\Controllers\Api\NotificationController::class, 'index']);
     Route::post('/notifications/{id}/read', [\App\Http\Controllers\Api\NotificationController::class, 'markAsRead']);

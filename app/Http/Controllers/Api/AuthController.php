@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\ValidationException;
+
 
 class AuthController extends Controller
 {
@@ -54,37 +54,33 @@ class AuthController extends Controller
 
     public function login(Request $request): JsonResponse
     {
-
-        $validator = Validator::make($request->all(), [
-            'email' => ['required', 'email'],
+        $credentials = $request->validate([
+            'email' => ['required','email'],
             'password' => ['required'],
+            'device_name' => ['sometimes','string'],
         ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'data' => null,
-                'errors' => $validator->errors(),
-                'meta' => null,
-            ], 422);
-        }
-
-        if (!Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
+        if (! auth()->attempt($credentials, $request->boolean('remember'))) {
             return response()->json([
                 'data' => null,
                 'errors' => ['email' => ['The provided credentials are incorrect.']],
                 'meta' => null,
-            ], 422);
+            ], 401);
         }
 
-        $request->session()->regenerate();
+        $user  = auth()->user();
+
+        // ✅ Sanctum token
+        $token = $user->createToken($request->input('device_name', 'api'), ['*'])->plainTextToken;
 
         return response()->json([
             'data' => [
-                'user' => Auth::user()->load('role'),
+                'user'    => $user->load('role'),
+                'token'   => $token,
                 'message' => 'Login successful.',
             ],
             'errors' => null,
-            'meta' => null,
+            'meta'   => null,
         ]);
     }
 
@@ -104,6 +100,7 @@ class AuthController extends Controller
 
     public function me(Request $request): JsonResponse
     {
+
         return response()->json([
             'data' => [
                 'user' => $request->user()->load('role'),
