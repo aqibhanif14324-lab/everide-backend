@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\Shipment;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Gate;
 
 class ShippingController extends Controller
 {
@@ -28,6 +29,7 @@ class ShippingController extends Controller
     public function createLabel(Request $request, string $orderId): JsonResponse
     {
         $order = Order::findOrFail($orderId);
+        Gate::authorize('order.manage_own', $order);
         $this->authorize('updateStatus', $order);
 
         // TODO: Implement shipping label generation

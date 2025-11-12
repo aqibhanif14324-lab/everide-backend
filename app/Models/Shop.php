@@ -19,6 +19,15 @@ class Shop extends Model
         'country',
         'cover_image_url',
         'status',
+        'approved_at',
+    ];
+
+    protected $attributes = [
+        'status' => 'pending',
+    ];
+
+    protected $casts = [
+        'approved_at' => 'datetime',
     ];
 
     protected static function boot()

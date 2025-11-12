@@ -1,14 +1,20 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\Api\ListingController;
+use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\ShippingController;
+use App\Http\Controllers\Api\ShopController;
+use App\Http\Controllers\Api\VariantController;
 use Illuminate\Support\Facades\Route;
+
+use App\Http\Controllers\Api\CsrfCookieController;
 
 // Public routes - CSRF cookie endpoint (needs session middleware)
 Route::middleware('api.session')->group(function () {
-    Route::get('/sanctum/csrf-cookie', function () {
-        return response()->json(['message' => 'CSRF cookie set']);
-    });
+    Route::get('/sanctum/csrf-cookie', [CsrfCookieController::class, 'show']);
 });
 
 // Auth routes - need session middleware for login/register/logout
@@ -24,51 +30,61 @@ Route::middleware('api.session')->prefix('auth')->group(function () {
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
 
-    // Listings
-    Route::post('/listings', [\App\Http\Controllers\Api\ListingController::class, 'store']);
-    Route::put('/listings/{id}', [\App\Http\Controllers\Api\ListingController::class, 'update']);
-    Route::delete('/listings/{id}', [\App\Http\Controllers\Api\ListingController::class, 'destroy']);
-    Route::post('/listings/{id}/publish', [\App\Http\Controllers\Api\ListingController::class, 'publish']);
-    Route::post('/listings/{id}/archive', [\App\Http\Controllers\Api\ListingController::class, 'archive']);
-    Route::post('/listings/{id}/options', [\App\Http\Controllers\Api\ListingController::class, 'attachOptions']);
-    Route::post('/listings/{id}/option-values', [\App\Http\Controllers\Api\ListingController::class, 'attachOptionValues']);
-    Route::post('/listings/{id}/variants', [\App\Http\Controllers\Api\ListingController::class, 'createVariant']);
-    Route::get('/listings/{id}/variants', [\App\Http\Controllers\Api\ListingController::class, 'getVariants']);
-
-    // Variants
-    Route::put('/variants/{id}', [\App\Http\Controllers\Api\VariantController::class, 'update']);
-    Route::post('/variants/{id}/images', [\App\Http\Controllers\Api\VariantController::class, 'addImage']);
-    Route::delete('/variants/{id}/images/{imageId}', [\App\Http\Controllers\Api\VariantController::class, 'deleteImage']);
-
-    // Shops
-    Route::apiResource('shops', \App\Http\Controllers\Api\ShopController::class);
-    Route::get('/shops/{slug}/listings', [\App\Http\Controllers\Api\ShopController::class, 'listings']);
-    Route::get('/shops/{id}/settings', [\App\Http\Controllers\Api\ShopController::class, 'getSettings']);
-    Route::put('/shops/{id}/settings', [\App\Http\Controllers\Api\ShopController::class, 'updateSettings']);
-
-    // Orders
-    Route::apiResource('orders', \App\Http\Controllers\Api\OrderController::class);
-    Route::post('/orders/{id}/status', [\App\Http\Controllers\Api\OrderController::class, 'updateStatus']);
-
-    // Payments
-    Route::post('/payments/{orderId}/intent', [\App\Http\Controllers\Api\PaymentController::class, 'createIntent']);
-
-    // Shipping
-    Route::get('/shipping/pickups', [\App\Http\Controllers\Api\ShippingController::class, 'getPickups']);
-    Route::post('/shipping/{orderId}/label', [\App\Http\Controllers\Api\ShippingController::class, 'createLabel']);
-    Route::get('/shipping/{orderId}/tracking', [\App\Http\Controllers\Api\ShippingController::class, 'getTracking']);
+    // Buyer abilities
+    Route::apiResource('orders', OrderController::class)->only(['index', 'show', 'store']);
+    Route::post('/payments/{orderId}/intent', [PaymentController::class, 'createIntent']);
+    Route::post('/shops', [ShopController::class, 'store']);
 
     // Notifications
-    Route::get('/notifications', [\App\Http\Controllers\Api\NotificationController::class, 'index']);
-    Route::post('/notifications/{id}/read', [\App\Http\Controllers\Api\NotificationController::class, 'markAsRead']);
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+
+    // Seller abilities
+    Route::middleware('seller')->group(function () {
+        // Listings
+        Route::post('/listings', [ListingController::class, 'store']);
+        Route::put('/listings/{id}', [ListingController::class, 'update']);
+        Route::delete('/listings/{id}', [ListingController::class, 'destroy']);
+        Route::post('/listings/{id}/publish', [ListingController::class, 'publish']);
+        Route::post('/listings/{id}/archive', [ListingController::class, 'archive']);
+        Route::post('/listings/{id}/options', [ListingController::class, 'attachOptions']);
+        Route::post('/listings/{id}/option-values', [ListingController::class, 'attachOptionValues']);
+        Route::post('/listings/{id}/variants', [ListingController::class, 'createVariant']);
+        Route::get('/listings/{id}/variants', [ListingController::class, 'getVariants']);
+
+        // Variants
+        Route::put('/variants/{id}', [VariantController::class, 'update']);
+        Route::post('/variants/{id}/images', [VariantController::class, 'addImage']);
+        Route::delete('/variants/{id}/images/{imageId}', [VariantController::class, 'deleteImage']);
+
+        // Shop management
+        Route::put('/shops/{id}', [ShopController::class, 'update']);
+        Route::delete('/shops/{id}', [ShopController::class, 'destroy']);
+        Route::get('/shops/{id}/settings', [ShopController::class, 'getSettings']);
+        Route::put('/shops/{id}/settings', [ShopController::class, 'updateSettings']);
+
+        // Orders management
+        Route::post('/orders/{id}/status', [OrderController::class, 'updateStatus']);
+
+        // Shipping
+        Route::get('/shipping/pickups', [ShippingController::class, 'getPickups']);
+        Route::post('/shipping/{orderId}/label', [ShippingController::class, 'createLabel']);
+        Route::get('/shipping/{orderId}/tracking', [ShippingController::class, 'getTracking']);
+    });
+
+    Route::middleware('admin')->group(function () {
+        // Reserved for admin-only API endpoints
+    });
 });
 
 // Public listings routes
-Route::get('/listings', [\App\Http\Controllers\Api\ListingController::class, 'index']);
-Route::get('/listings/{slug}', [\App\Http\Controllers\Api\ListingController::class, 'show']);
+Route::get('/listings', [ListingController::class, 'index']);
+Route::get('/listings/{slug}', [ListingController::class, 'show']);
 
 // Public shops routes
-Route::get('/shops/{slug}', [\App\Http\Controllers\Api\ShopController::class, 'show']);
+Route::get('/shops', [ShopController::class, 'index']);
+Route::get('/shops/{slug}/listings', [ShopController::class, 'listings']);
+Route::get('/shops/{slug}', [ShopController::class, 'show']);
 
 // Webhooks (public, but signature verified)
 Route::post('/webhooks/payments', [\App\Http\Controllers\Api\WebhookController::class, 'handlePayment']);

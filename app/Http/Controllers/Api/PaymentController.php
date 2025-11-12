@@ -7,13 +7,14 @@ use App\Models\Order;
 use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Gate;
 
 class PaymentController extends Controller
 {
     public function createIntent(Request $request, string $orderId): JsonResponse
     {
         $order = Order::findOrFail($orderId);
-        $this->authorize('view', $order);
+        Gate::authorize('order.pay', $order);
 
         // TODO: Implement Stripe/Mangopay payment intent creation
         // This is a placeholder implementation

@@ -10,6 +10,7 @@ use App\Models\OptionValue;
 use App\Models\ListingVariant;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -98,6 +99,7 @@ class ListingController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        Gate::authorize('listing.create');
         $this->authorize('create', Listing::class);
 
         $validator = Validator::make($request->all(), [
@@ -164,6 +166,7 @@ class ListingController extends Controller
     public function update(Request $request, string $id): JsonResponse
     {
         $listing = Listing::findOrFail($id);
+        Gate::authorize('listing.update', $listing);
         $this->authorize('update', $listing);
 
         $validator = Validator::make($request->all(), [
@@ -203,6 +206,7 @@ class ListingController extends Controller
     public function destroy(string $id): JsonResponse
     {
         $listing = Listing::findOrFail($id);
+        Gate::authorize('listing.update', $listing);
         $this->authorize('delete', $listing);
 
         $listing->delete();
@@ -217,6 +221,7 @@ class ListingController extends Controller
     public function publish(Request $request, string $id): JsonResponse
     {
         $listing = Listing::findOrFail($id);
+        Gate::authorize('listing.update', $listing);
         $this->authorize('publish', $listing);
 
         $listing->update([
@@ -234,6 +239,7 @@ class ListingController extends Controller
     public function archive(Request $request, string $id): JsonResponse
     {
         $listing = Listing::findOrFail($id);
+        Gate::authorize('listing.archive', $listing);
         $this->authorize('archive', $listing);
 
         $listing->update(['status' => 'archived']);
@@ -248,6 +254,7 @@ class ListingController extends Controller
     public function attachOptions(Request $request, string $id): JsonResponse
     {
         $listing = Listing::findOrFail($id);
+        Gate::authorize('listing.update', $listing);
         $this->authorize('update', $listing);
 
         $validator = Validator::make($request->all(), [
@@ -275,6 +282,7 @@ class ListingController extends Controller
     public function attachOptionValues(Request $request, string $id): JsonResponse
     {
         $listing = Listing::findOrFail($id);
+        Gate::authorize('listing.update', $listing);
         $this->authorize('update', $listing);
 
         $validator = Validator::make($request->all(), [
@@ -302,6 +310,7 @@ class ListingController extends Controller
     public function createVariant(Request $request, string $id): JsonResponse
     {
         $listing = Listing::findOrFail($id);
+        Gate::authorize('listing.update', $listing);
         $this->authorize('update', $listing);
 
         $validator = Validator::make($request->all(), [
@@ -352,6 +361,7 @@ class ListingController extends Controller
     public function getVariants(string $id): JsonResponse
     {
         $listing = Listing::findOrFail($id);
+        Gate::authorize('listing.update', $listing);
         $variants = $listing->variants()->with('optionValues.option')->get();
 
         return response()->json([

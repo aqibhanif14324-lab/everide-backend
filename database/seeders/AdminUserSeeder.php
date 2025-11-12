@@ -2,36 +2,27 @@
 
 namespace Database\Seeders;
 
-use App\Models\Role;
+use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
-        $adminRole = Role::where('slug', 'admin')->first();
-        $moderatorRole = Role::where('slug', 'moderator')->first();
-        $userRole = Role::where('slug', 'user')->first();
+        DB::table('users')
+            ->whereNull('role')
+            ->orWhere('role', '')
+            ->update(['role' => UserRole::USER->value]);
 
         // Admin user
         User::firstOrCreate(
             ['email' => 'admin@example.com'],
             [
-                'role_id' => $adminRole->id,
+                'role' => UserRole::ADMIN,
                 'name' => 'Admin User',
-                'password' => Hash::make('password'),
-                'email_verified_at' => now(),
-            ]
-        );
-
-        // Moderator user
-        User::firstOrCreate(
-            ['email' => 'moderator@example.com'],
-            [
-                'role_id' => $moderatorRole->id,
-                'name' => 'Moderator User',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
             ]
@@ -42,7 +33,7 @@ class AdminUserSeeder extends Seeder
             User::firstOrCreate(
                 ['email' => "user{$i}@example.com"],
                 [
-                    'role_id' => $userRole->id,
+                    'role' => UserRole::USER,
                     'name' => "User {$i}",
                     'password' => Hash::make('password'),
                     'email_verified_at' => now(),

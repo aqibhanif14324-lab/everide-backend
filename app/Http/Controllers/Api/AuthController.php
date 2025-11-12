@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Enums\UserRole;
 use App\Models\User;
-use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -31,20 +31,18 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $userRole = Role::where('slug', 'user')->first();
-
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role_id' => $userRole->id,
+            'role' => UserRole::USER,
         ]);
 
         Auth::login($user);
 
         return response()->json([
             'data' => [
-                'user' => $user->load('role'),
+                'user' => $user,
                 'message' => 'Registration successful.',
             ],
             'errors' => null,
@@ -75,7 +73,7 @@ class AuthController extends Controller
 
         return response()->json([
             'data' => [
-                'user'    => $user->load('role'),
+                'user'    => $user,
                 'token'   => $token,
                 'message' => 'Login successful.',
             ],
@@ -103,7 +101,7 @@ class AuthController extends Controller
 
         return response()->json([
             'data' => [
-                'user' => $request->user()->load('role'),
+                'user' => $request->user(),
             ],
             'errors' => null,
             'meta' => null,

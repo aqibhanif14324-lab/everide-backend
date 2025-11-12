@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -12,10 +12,10 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, SoftDeletes ,HasApiTokens;
+    use HasFactory, Notifiable, SoftDeletes, HasApiTokens;
 
     protected $fillable = [
-        'role_id',
+        'role',
         'name',
         'email',
         'password',
@@ -23,6 +23,10 @@ class User extends Authenticatable
         'phone',
         'bio',
         'notification_prefs',
+    ];
+
+    protected $attributes = [
+        'role' => UserRole::USER->value,
     ];
 
     /**
@@ -45,13 +49,9 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'role' => UserRole::class,
             'notification_prefs' => 'array',
         ];
-    }
-
-    public function role()
-    {
-        return $this->belongsTo(Role::class);
     }
 
     public function addresses()
@@ -81,16 +81,25 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return $this->role_id === 1 || $this->role?->slug === 'admin';
+        return $this->role === UserRole::ADMIN;
     }
 
-    public function isModerator(): bool
+    public function isSeller(): bool
     {
-        return $this->role_id === 2 || $this->role?->slug === 'moderator';
+        return $this->role === UserRole::SELLER || $this->isAdmin();
     }
 
-    public function isUser(): bool
+    public function isBuyer(): bool
     {
-        return $this->role_id === 3 || $this->role?->slug === 'user';
+        return in_array($this->role, [UserRole::USER, UserRole::SELLER, UserRole::ADMIN], true);
+    }
+
+    public function promoteToSeller(): void
+    {
+        if (! $this->isSeller()) {
+            $this->forceFill([
+                'role' => UserRole::SELLER,
+            ])->save();
+        }
     }
 }

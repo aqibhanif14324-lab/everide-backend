@@ -14,11 +14,11 @@ class ShopPolicy
 
     public function view(?User $user, Shop $shop): bool
     {
-        if ($shop->status === 'active') {
+        if ($shop->status === 'approved') {
             return true;
         }
         
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
@@ -27,12 +27,20 @@ class ShopPolicy
 
     public function create(User $user): bool
     {
-        return $user->isUser() || $user->isModerator() || $user->isAdmin();
+        return $user->isBuyer();
     }
 
     public function update(User $user, Shop $shop): bool
     {
-        return $user->isAdmin() || $shop->owner_id === $user->id;
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        if ($shop->owner_id !== $user->id) {
+            return false;
+        }
+
+        return $user->isSeller() || $shop->status === 'pending';
     }
 
     public function delete(User $user, Shop $shop): bool

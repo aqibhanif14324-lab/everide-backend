@@ -7,6 +7,7 @@ use App\Models\ListingVariant;
 use App\Models\VariantImage;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
 
 class VariantController extends Controller
@@ -14,6 +15,7 @@ class VariantController extends Controller
     public function update(Request $request, string $id): JsonResponse
     {
         $variant = ListingVariant::findOrFail($id);
+        Gate::authorize('listing.update', $variant->listing);
         $this->authorize('update', $variant->listing);
 
         $validator = Validator::make($request->all(), [
@@ -45,6 +47,7 @@ class VariantController extends Controller
     public function addImage(Request $request, string $id): JsonResponse
     {
         $variant = ListingVariant::findOrFail($id);
+        Gate::authorize('listing.update', $variant->listing);
         $this->authorize('update', $variant->listing);
 
         $validator = Validator::make($request->all(), [
@@ -76,6 +79,7 @@ class VariantController extends Controller
     public function deleteImage(Request $request, string $id, string $imageId): JsonResponse
     {
         $variant = ListingVariant::findOrFail($id);
+        Gate::authorize('listing.update', $variant->listing);
         $this->authorize('update', $variant->listing);
 
         $image = VariantImage::where('variant_id', $variant->id)->findOrFail($imageId);

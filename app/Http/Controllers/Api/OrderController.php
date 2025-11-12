@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class OrderController extends Controller
 {
@@ -20,8 +21,8 @@ class OrderController extends Controller
         
         $query = Order::with(['shop', 'items.listing', 'items.variant']);
 
-        if ($user->isAdmin() || $user->isModerator()) {
-            // Admins and moderators can see all orders
+        if ($user->isAdmin()) {
+            // Admins can see all orders
         } else {
             // Users see their own orders or orders from their shops
             $query->where(function($q) use ($user) {
@@ -61,6 +62,7 @@ class OrderController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        Gate::authorize('order.create');
         $this->authorize('create', Order::class);
 
         $validator = Validator::make($request->all(), [
@@ -180,6 +182,7 @@ class OrderController extends Controller
     public function updateStatus(Request $request, string $id): JsonResponse
     {
         $order = Order::findOrFail($id);
+        Gate::authorize('order.manage_own', $order);
         $this->authorize('updateStatus', $order);
 
         $validator = Validator::make($request->all(), [

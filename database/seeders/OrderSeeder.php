@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\UserRole;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Listing;
@@ -14,9 +15,7 @@ class OrderSeeder extends Seeder
 {
     public function run(): void
     {
-        $buyers = User::whereHas('role', function($q) {
-            $q->where('slug', 'user');
-        })->take(5)->get();
+        $buyers = User::whereIn('role', [UserRole::USER, UserRole::SELLER])->take(5)->get();
 
         $shops = Shop::all();
         $listings = Listing::with('variants')->where('status', 'published')->get();

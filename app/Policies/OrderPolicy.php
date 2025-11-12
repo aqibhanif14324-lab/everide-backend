@@ -9,22 +9,28 @@ class OrderPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isAdmin() || $user->isModerator() || $user->isUser();
+        return $user->isBuyer();
     }
 
     public function view(User $user, Order $order): bool
     {
-        return $user->isAdmin() || $user->isModerator() || $order->buyer_id === $user->id || $order->shop->owner_id === $user->id;
+        $shopOwnerId = $order->shop?->owner_id;
+
+        return $user->isAdmin()
+            || $order->buyer_id === $user->id
+            || ($user->isSeller() && $shopOwnerId === $user->id);
     }
 
     public function create(User $user): bool
     {
-        return $user->isUser() || $user->isModerator() || $user->isAdmin();
+        return $user->isBuyer();
     }
 
     public function update(User $user, Order $order): bool
     {
-        return $user->isAdmin() || $user->isModerator() || $order->shop->owner_id === $user->id;
+        $shopOwnerId = $order->shop?->owner_id;
+
+        return $user->isSeller() && $shopOwnerId === $user->id;
     }
 
     public function delete(User $user, Order $order): bool
@@ -44,6 +50,8 @@ class OrderPolicy
 
     public function updateStatus(User $user, Order $order): bool
     {
-        return $user->isAdmin() || $user->isModerator() || $order->shop->owner_id === $user->id;
+        $shopOwnerId = $order->shop?->owner_id;
+
+        return $user->isSeller() && $shopOwnerId === $user->id;
     }
 }

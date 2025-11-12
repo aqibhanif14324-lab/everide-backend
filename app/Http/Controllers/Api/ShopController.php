@@ -7,6 +7,7 @@ use App\Models\Shop;
 use App\Models\ShopSetting;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -14,7 +15,9 @@ class ShopController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $shops = Shop::with('owner')->where('status', 'active')->paginate(15);
+        $shops = Shop::with('owner')
+            ->where('status', 'approved')
+            ->paginate(15);
 
         return response()->json([
             'data' => $shops->items(),
@@ -31,6 +34,7 @@ class ShopController extends Controller
     public function show(string $slug): JsonResponse
     {
         $shop = Shop::with(['owner', 'settings'])->where('slug', $slug)->firstOrFail();
+        $this->authorize('view', $shop);
         
         return response()->json([
             'data' => $shop,
@@ -77,7 +81,7 @@ class ShopController extends Controller
             'city' => $request->city,
             'country' => $request->country,
             'cover_image_url' => $request->cover_image_url,
-            'status' => 'active',
+            'status' => 'pending',
         ]);
 
         // Create default settings
@@ -96,6 +100,7 @@ class ShopController extends Controller
     public function update(Request $request, string $id): JsonResponse
     {
         $shop = Shop::findOrFail($id);
+        Gate::authorize('shop.manage_own', $shop);
         $this->authorize('update', $shop);
 
         $validator = Validator::make($request->all(), [
@@ -126,6 +131,7 @@ class ShopController extends Controller
     public function destroy(string $id): JsonResponse
     {
         $shop = Shop::findOrFail($id);
+        Gate::authorize('shop.manage_own', $shop);
         $this->authorize('delete', $shop);
 
         $shop->delete();
@@ -160,6 +166,7 @@ class ShopController extends Controller
     public function getSettings(Request $request, string $id): JsonResponse
     {
         $shop = Shop::findOrFail($id);
+        Gate::authorize('shop.manage_own', $shop);
         $this->authorize('update', $shop);
 
         return response()->json([
@@ -172,6 +179,7 @@ class ShopController extends Controller
     public function updateSettings(Request $request, string $id): JsonResponse
     {
         $shop = Shop::findOrFail($id);
+        Gate::authorize('shop.manage_own', $shop);
         $this->authorize('update', $shop);
 
         $validator = Validator::make($request->all(), [

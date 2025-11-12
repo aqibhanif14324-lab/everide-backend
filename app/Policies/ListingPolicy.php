@@ -18,31 +18,37 @@ class ListingPolicy
             return true;
         }
         
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
-        return $user->isAdmin() || $user->isModerator() || $listing->user_id === $user->id || $listing->shop->owner_id === $user->id;
+        $shopOwnerId = $listing->shop?->owner_id;
+
+        return $user->isSeller() || $listing->user_id === $user->id || $shopOwnerId === $user->id;
     }
 
     public function create(User $user): bool
     {
-        return $user->isUser() || $user->isModerator() || $user->isAdmin();
+        return $user->isSeller();
     }
 
     public function update(User $user, Listing $listing): bool
     {
-        return $user->isAdmin() || $user->isModerator() || $listing->user_id === $user->id || $listing->shop->owner_id === $user->id;
+        $shopOwnerId = $listing->shop?->owner_id;
+
+        return $user->isSeller() && ($listing->user_id === $user->id || $shopOwnerId === $user->id);
     }
 
     public function delete(User $user, Listing $listing): bool
     {
-        return $user->isAdmin() || $listing->user_id === $user->id || $listing->shop->owner_id === $user->id;
+        $shopOwnerId = $listing->shop?->owner_id;
+
+        return $user->isSeller() && ($listing->user_id === $user->id || $shopOwnerId === $user->id);
     }
 
     public function restore(User $user, Listing $listing): bool
     {
-        return $user->isAdmin() || $user->isModerator();
+        return $user->isSeller();
     }
 
     public function forceDelete(User $user, Listing $listing): bool
@@ -52,11 +58,15 @@ class ListingPolicy
 
     public function publish(User $user, Listing $listing): bool
     {
-        return $user->isAdmin() || $user->isModerator() || $listing->user_id === $user->id || $listing->shop->owner_id === $user->id;
+        $shopOwnerId = $listing->shop?->owner_id;
+
+        return $user->isSeller() && ($listing->user_id === $user->id || $shopOwnerId === $user->id);
     }
 
     public function archive(User $user, Listing $listing): bool
     {
-        return $user->isAdmin() || $user->isModerator() || $listing->user_id === $user->id || $listing->shop->owner_id === $user->id;
+        $shopOwnerId = $listing->shop?->owner_id;
+
+        return $user->isSeller() && ($listing->user_id === $user->id || $shopOwnerId === $user->id);
     }
 }

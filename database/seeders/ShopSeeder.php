@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\UserRole;
 use App\Models\Shop;
 use App\Models\ShopSetting;
 use App\Models\User;
@@ -12,9 +13,7 @@ class ShopSeeder extends Seeder
 {
     public function run(): void
     {
-        $users = User::whereHas('role', function($q) {
-            $q->where('slug', 'user');
-        })->take(5)->get();
+        $users = User::where('role', UserRole::USER)->take(5)->get();
 
         $shopNames = [
             'BikeParts Pro',
@@ -35,9 +34,14 @@ class ShopSeeder extends Seeder
                         'city' => 'Paris',
                         'country' => 'France',
                         'cover_image_url' => 'https://picsum.photos/800/400?random=' . ($index + 1),
-                        'status' => 'active',
+                        'status' => 'approved',
+                        'approved_at' => now(),
                     ]
                 );
+
+                if (! $shop->owner->isSeller()) {
+                    $shop->owner->forceFill(['role' => UserRole::SELLER])->save();
+                }
 
                 // Create shop settings
                 ShopSetting::firstOrCreate(
